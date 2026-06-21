@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DesktopFile {
     pub name: String,
     pub execution_command: String,
@@ -8,12 +8,12 @@ pub struct DesktopFile {
 
 impl DesktopFile {
     pub fn from_path(path: PathBuf) -> Option<Self> {
-        println!("path: {:?}", path);
         let text = fs::read_to_string(&path).unwrap();
 
         let mut in_desktop_entry = false;
         let mut name: Option<String> = None;
         let mut exec: Option<String> = None;
+        let mut no_display: Option<bool> = None;
 
         for raw_line in text.lines() {
             let line = raw_line.trim_end_matches('\r').trim_end();
@@ -35,11 +35,14 @@ impl DesktopFile {
                 name = Some(value.to_string());
             } else if key == "Exec" && exec.is_none() {
                 exec = Some(value.to_string());
+            } else if key == "NoDisplay" {
+                no_display = Some(value == "true");
             }
         }
 
         if let Some(name) = name
             && let Some(exec) = exec
+            && Some(true) != no_display
         {
             Some(Self {
                 name,
@@ -52,12 +55,14 @@ impl DesktopFile {
 }
 
 pub struct DesktopFiles {
+    iterator_index: usize,
     desktop_files: Vec<DesktopFile>,
 }
 
 impl DesktopFiles {
     pub fn find(desktop_file_dirs: Vec<PathBuf>) -> Self {
         let mut result = Self {
+            iterator_index: 0,
             desktop_files: vec![],
         };
 
@@ -69,10 +74,11 @@ impl DesktopFiles {
                 let path = entry.path();
                 if file_type.is_dir() {
                     to_explore.push(entry.path());
-                } else if file_type.is_file() && path.extension().is_some_and(|e| e == "desktop") {
-                    result
-                        .desktop_files
-                        .push(DesktopFile::from_path(path).unwrap());
+                } else if file_type.is_file()
+                    && path.extension().is_some_and(|e| e == "desktop")
+                    && let Some(desktop_file) = DesktopFile::from_path(path.to_owned())
+                {
+                    result.desktop_files.push(desktop_file)
                 }
             }
         }
@@ -114,5 +120,26 @@ impl DesktopFiles {
             .iter()
             .map(|item| item.name.as_str())
             .collect()
+    }
+
+    pub fn reset_iterator(&mut self) {
+        self.iterator_index = 0;
+    }
+}
+
+impl Iterator for DesktopFiles {
+    type Item = DesktopFile;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ret = self.desktop_files.get(self.iterator_index);
+        self.iterator_index += 1;
+
+        match ret {
+            Some(item) => Some(item.to_owned()),
+            None => {
+                self.iterator_index = 0;
+                None
+            }
+        }
     }
 }

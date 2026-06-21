@@ -4,9 +4,8 @@ mod desktop_file;
 
 fn main() {
     let desktop_files = DesktopFiles::find_default();
-    let names = desktop_files.get_all_names();
 
-    for name in names {
-        println!("name: {name}")
+    for entry in desktop_files {
+        println!("name: {}, exec: {}", entry.name, entry.execution_command);
     }
 }

@@ -3,6 +3,7 @@ use crate::{app::App, desktop_file::DesktopFiles};
 mod desktop_file;
 mod app;
 mod fuzzy_search_list;
+mod input_box;
 
 fn main() {
     let desktop_files = DesktopFiles::find_default();

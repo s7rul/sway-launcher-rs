@@ -30,7 +30,11 @@ impl App {
             match key.code {
                 KeyCode::Esc => self.should_exit = true,
                 KeyCode::Enter => todo!(),
-                _ => self.input_box.handle_event(key.code),
+                _ => {
+                    self.input_box.handle_event(key.code);
+                    let current_input = self.input_box.get_current_input();
+                    self.item_list_widget.update_rankings(&current_input);
+                }
             }
         }
 

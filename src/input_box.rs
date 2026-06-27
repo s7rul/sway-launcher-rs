@@ -43,6 +43,10 @@ impl InputBox {
     pub fn get_cursor_index(&self) -> u16 {
         self.index as u16
     }
+
+    pub fn get_current_input(&self) -> String {
+        self.buffer.iter().collect()
+    }
 }
 
 impl Widget for &InputBox {

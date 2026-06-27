@@ -18,13 +18,18 @@ pub struct App {
 
 impl App {
     pub fn new(items: Vec<String>) -> Self {
-        Self { should_exit: false, item_list_widget: FuzzySearchList::new(items), input_box: InputBox::new()}
+        Self {
+            should_exit: false,
+            item_list_widget: FuzzySearchList::new(items),
+            input_box: InputBox::new(),
+        }
     }
 
     pub fn handle_event(&mut self) -> Result<()> {
         if let Some(key) = event::read()?.as_key_event() {
             match key.code {
                 KeyCode::Esc => self.should_exit = true,
+                KeyCode::Enter => todo!(),
                 _ => self.input_box.handle_event(key.code),
             }
         }
@@ -49,7 +54,10 @@ impl App {
         frame.render_widget(&self.input_box, input_box_area);
 
         let cursor_offset = self.input_box.get_cursor_index();
-        frame.set_cursor_position(Position::new(input_box_area.x + cursor_offset, input_box_area.y));
+        frame.set_cursor_position(Position::new(
+            input_box_area.x + cursor_offset,
+            input_box_area.y,
+        ));
     }
 
     pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {

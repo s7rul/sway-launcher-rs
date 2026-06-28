@@ -9,7 +9,7 @@ use skim::{
 
 struct ItemHolder {
     name: String,
-    rank: i64,
+    rank: Option<i64>,
 }
 
 impl Ord for ItemHolder {
@@ -56,7 +56,7 @@ impl FuzzySearchList {
                 .iter()
                 .map(|name| ItemHolder {
                     name: name.to_owned(),
-                    rank: 0,
+                    rank: Some(0),
                 })
                 .collect(),
             matcher: ArinaeMatcher::new(CaseMatching::Smart, true, true),
@@ -65,10 +65,7 @@ impl FuzzySearchList {
 
     pub fn update_rankings(&mut self, key: &str) {
         for item in &mut self.items {
-            match self.matcher.fuzzy_match(&item.name, key) {
-                Some(rank) => item.rank = rank,
-                None => item.rank = -1,
-            }
+            item.rank = self.matcher.fuzzy_match(&item.name, key);
         }
 
         self.items.sort();
@@ -81,15 +78,12 @@ impl Widget for &FuzzySearchList {
         Self: Sized,
     {
         let num_items_to_show = area.height as usize;
-        let mut lines = vec![];
-        for item in self.items.iter().rev().take(num_items_to_show).rev() {
-            lines.push(Line::from(vec![
-                format!("{} - ", item.rank).into(),
+        for (i, item) in self.items.iter().rev().take(num_items_to_show).filter(|item| item.rank.is_some()).enumerate() {
+            let line = Line::from(vec![
+                format!("{:?} - ", item.rank).into(),
                 item.name.as_str().into(),
-            ]));
+            ]);
+            buf.set_line(area.x, area.y + (area.height - i as u16) - 1, &line, area.width);
         }
-
-        let paragraph = Paragraph::new(lines);
-        paragraph.render(area, buf);
     }
 }

@@ -2,7 +2,10 @@ use ratatui::{
     text::Line,
     widgets::{Paragraph, Widget},
 };
-use skim::{CaseMatching, fuzzy_matcher::{FuzzyMatcher, arinae::ArinaeMatcher}};
+use skim::{
+    CaseMatching,
+    fuzzy_matcher::{FuzzyMatcher, arinae::ArinaeMatcher},
+};
 
 struct ItemHolder {
     name: String,
@@ -11,7 +14,19 @@ struct ItemHolder {
 
 impl Ord for ItemHolder {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.rank.cmp(&other.rank)
+        match self.rank.cmp(&other.rank) {
+            std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+            std::cmp::Ordering::Equal => {
+                if self.name.len() == other.name.len() {
+                    std::cmp::Ordering::Equal
+                } else if self.name.len() < other.name.len() {
+                    std::cmp::Ordering::Greater
+                } else {
+                    std::cmp::Ordering::Less
+                }
+            }
+            std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+        }
     }
 }
 
@@ -23,7 +38,7 @@ impl PartialOrd for ItemHolder {
 
 impl PartialEq for ItemHolder {
     fn eq(&self, other: &Self) -> bool {
-        self.rank == other.rank
+        self.rank == other.rank && self.name.len() == other.name.len()
     }
 }
 
@@ -52,7 +67,7 @@ impl FuzzySearchList {
         for item in &mut self.items {
             match self.matcher.fuzzy_match(&item.name, key) {
                 Some(rank) => item.rank = rank,
-                None => item.rank = 0,
+                None => item.rank = -1,
             }
         }
 
@@ -68,8 +83,10 @@ impl Widget for &FuzzySearchList {
         let num_items_to_show = area.height as usize;
         let mut lines = vec![];
         for item in self.items.iter().rev().take(num_items_to_show).rev() {
-            let line_string = format!("{}", item.name);
-            lines.push(Line::from(line_string.as_str()));
+            lines.push(Line::from(vec![
+                format!("{} - ", item.rank).into(),
+                item.name.as_str().into(),
+            ]));
         }
 
         let paragraph = Paragraph::new(lines);

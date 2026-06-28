@@ -1,6 +1,6 @@
 use ratatui::{
     text::Line,
-    widgets::{Paragraph, Widget},
+    widgets::Widget,
 };
 use skim::{
     CaseMatching,
@@ -47,6 +47,8 @@ impl Eq for ItemHolder {}
 pub struct FuzzySearchList {
     items: Vec<ItemHolder>,
     matcher: ArinaeMatcher,
+    select_index: usize,
+    number_of_items_shown: usize,
 }
 
 impl FuzzySearchList {
@@ -60,29 +62,59 @@ impl FuzzySearchList {
                 })
                 .collect(),
             matcher: ArinaeMatcher::new(CaseMatching::Smart, true, true),
+            select_index: 0,
+            number_of_items_shown: items.len(),
         }
     }
 
     pub fn update_rankings(&mut self, key: &str) {
+        self.select_index = 0;
+        let mut items_not_none_count = 0;
+
         for item in &mut self.items {
             item.rank = self.matcher.fuzzy_match(&item.name, key);
+
+            if item.rank.is_some() {
+                items_not_none_count += 1;
+            }
         }
+        self.number_of_items_shown = items_not_none_count;
 
         self.items.sort();
     }
+
+    pub fn move_select_up(&mut self) {
+        if self.select_index < self.number_of_items_shown - 1{
+            self.select_index += 1;
+        }
+    }
+
+    pub fn move_select_down(&mut self) {
+        if self.select_index > 0 {
+            self.select_index -= 1;
+        }
+    }
 }
 
-impl Widget for &FuzzySearchList {
+impl Widget for &mut FuzzySearchList {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
+        if self.select_index > area.height as usize - 1 {
+            self.select_index = area.height as usize - 1;
+        }
+
         let num_items_to_show = area.height as usize;
         for (i, item) in self.items.iter().rev().take(num_items_to_show).filter(|item| item.rank.is_some()).enumerate() {
-            let line = Line::from(vec![
-                format!("{:?} - ", item.rank).into(),
-                item.name.as_str().into(),
-            ]);
+            let mut spans = vec![];
+            if i == self.select_index {
+                spans.push(" > ".into());
+            } else {
+                spans.push("   ".into());
+            }
+            spans.push(item.name.as_str().into());
+            let line = Line::from(spans);
             buf.set_line(area.x, area.y + (area.height - i as u16) - 1, &line, area.width);
         }
     }

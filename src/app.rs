@@ -30,6 +30,8 @@ impl App {
             match key.code {
                 KeyCode::Esc => self.should_exit = true,
                 KeyCode::Enter => todo!(),
+                KeyCode::Up => self.item_list_widget.move_select_up(),
+                KeyCode::Down => self.item_list_widget.move_select_down(),
                 _ => {
                     self.input_box.handle_event(key.code);
                     let current_input = self.input_box.get_current_input();
@@ -41,7 +43,7 @@ impl App {
         Ok(())
     }
 
-    pub fn render(&self, frame: &mut Frame) {
+    pub fn render(&mut self, frame: &mut Frame) {
         let layout = Layout::vertical([Constraint::Min(3), Constraint::Length(3)]);
         let [item_area, input_area] = frame.area().layout(&layout);
 
@@ -49,7 +51,7 @@ impl App {
         let item_list_area = item_block.inner(item_area);
         frame.render_widget(item_block, item_area);
 
-        frame.render_widget(&self.item_list_widget, item_list_area);
+        frame.render_widget(&mut self.item_list_widget, item_list_area);
 
         let input_block = Block::bordered().title(Line::from(" Search ").centered());
         let input_box_area = input_block.inner(input_area);

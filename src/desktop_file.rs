@@ -125,6 +125,10 @@ impl DesktopFiles {
     pub fn reset_iterator(&mut self) {
         self.iterator_index = 0;
     }
+
+    pub fn extract(self) -> Vec<DesktopFile> {
+        self.desktop_files
+    }
 }
 
 impl Iterator for DesktopFiles {

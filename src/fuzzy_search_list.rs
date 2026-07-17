@@ -1,18 +1,16 @@
-use ratatui::{
-    text::Line,
-    widgets::Widget,
-};
+use ratatui::{text::Line, widgets::Widget};
 use skim::{
     CaseMatching,
     fuzzy_matcher::{FuzzyMatcher, arinae::ArinaeMatcher},
 };
 
-struct ItemHolder {
+struct ItemHolder<T> {
     name: String,
+    item: T,
     rank: Option<i64>,
 }
 
-impl Ord for ItemHolder {
+impl <T> Ord for ItemHolder<T> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match self.rank.cmp(&other.rank) {
             std::cmp::Ordering::Less => std::cmp::Ordering::Less,
@@ -30,34 +28,35 @@ impl Ord for ItemHolder {
     }
 }
 
-impl PartialOrd for ItemHolder {
+impl <T> PartialOrd for ItemHolder<T> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl PartialEq for ItemHolder {
+impl <T> PartialEq for ItemHolder<T> {
     fn eq(&self, other: &Self) -> bool {
         self.rank == other.rank && self.name.len() == other.name.len()
     }
 }
 
-impl Eq for ItemHolder {}
+impl <T> Eq for ItemHolder<T> {}
 
-pub struct FuzzySearchList {
-    items: Vec<ItemHolder>,
+pub struct FuzzySearchList<T> {
+    items: Vec<ItemHolder<T>>,
     matcher: ArinaeMatcher,
     select_index: usize,
     number_of_items_shown: usize,
 }
 
-impl FuzzySearchList {
-    pub fn new(items: Vec<String>) -> Self {
+impl <T: Clone> FuzzySearchList<T> {
+    pub fn new(items: Vec<(String, T)>) -> Self {
         Self {
             items: items
                 .iter()
-                .map(|name| ItemHolder {
-                    name: name.to_owned(),
+                .map(|item| ItemHolder {
+                    name: item.0.to_owned(),
+                    item: item.1.clone(),
                     rank: Some(0),
                 })
                 .collect(),
@@ -84,7 +83,7 @@ impl FuzzySearchList {
     }
 
     pub fn move_select_up(&mut self) {
-        if self.select_index < self.number_of_items_shown - 1{
+        if self.select_index < self.number_of_items_shown - 1 {
             self.select_index += 1;
         }
     }
@@ -94,9 +93,15 @@ impl FuzzySearchList {
             self.select_index -= 1;
         }
     }
+
+    pub fn get_selected(&self) -> T {
+        self.items[self.items.len() - self.select_index - 1]
+            .item
+            .to_owned()
+    }
 }
 
-impl Widget for &mut FuzzySearchList {
+impl <T> Widget for &mut FuzzySearchList<T> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
@@ -106,7 +111,14 @@ impl Widget for &mut FuzzySearchList {
         }
 
         let num_items_to_show = area.height as usize;
-        for (i, item) in self.items.iter().rev().take(num_items_to_show).filter(|item| item.rank.is_some()).enumerate() {
+        for (i, item) in self
+            .items
+            .iter()
+            .rev()
+            .take(num_items_to_show)
+            .filter(|item| item.rank.is_some())
+            .enumerate()
+        {
             let mut spans = vec![];
             if i == self.select_index {
                 spans.push(" > ".into());
@@ -115,7 +127,12 @@ impl Widget for &mut FuzzySearchList {
             }
             spans.push(item.name.as_str().into());
             let line = Line::from(spans);
-            buf.set_line(area.x, area.y + (area.height - i as u16) - 1, &line, area.width);
+            buf.set_line(
+                area.x,
+                area.y + (area.height - i as u16) - 1,
+                &line,
+                area.width,
+            );
         }
     }
 }

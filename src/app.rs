@@ -8,20 +8,22 @@ use ratatui::{
     widgets::Block,
 };
 
-use crate::{fuzzy_search_list::FuzzySearchList, input_box::InputBox};
+use crate::{desktop_file::DesktopFile, fuzzy_search_list::FuzzySearchList, input_box::InputBox};
 
-pub struct App {
+pub struct App<T> {
     should_exit: bool,
-    item_list_widget: FuzzySearchList,
+    item_list_widget: FuzzySearchList<T>,
     input_box: InputBox,
+    selected_item: Option<T>,
 }
 
-impl App {
-    pub fn new(items: Vec<String>) -> Self {
+impl <T: Clone> App<T> {
+    pub fn new(items: Vec<(String, T)>) -> Self {
         Self {
             should_exit: false,
             item_list_widget: FuzzySearchList::new(items),
             input_box: InputBox::new(),
+            selected_item: None,
         }
     }
 
@@ -29,7 +31,10 @@ impl App {
         if let Some(key) = event::read()?.as_key_event() {
             match key.code {
                 KeyCode::Esc => self.should_exit = true,
-                KeyCode::Enter => todo!(),
+                KeyCode::Enter => {
+                    self.should_exit = true;
+                    self.selected_item = Some(self.item_list_widget.get_selected());
+                }
                 KeyCode::Up => self.item_list_widget.move_select_up(),
                 KeyCode::Down => self.item_list_widget.move_select_down(),
                 _ => {
@@ -66,12 +71,12 @@ impl App {
         ));
     }
 
-    pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+    pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<Option<T>> {
         while !self.should_exit {
             terminal.draw(|frame| self.render(frame))?;
             self.handle_event()?;
         }
 
-        Ok(())
+        Ok(self.selected_item)
     }
 }

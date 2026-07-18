@@ -4,6 +4,7 @@ use std::{fs, path::PathBuf};
 pub struct DesktopFile {
     pub name: String,
     pub execution_command: String,
+    pub path: PathBuf,
 }
 
 impl DesktopFile {
@@ -47,6 +48,7 @@ impl DesktopFile {
             Some(Self {
                 name,
                 execution_command: exec,
+                path,
             })
         } else {
             None

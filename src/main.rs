@@ -1,3 +1,5 @@
+use sway_groups_core::sway::SwayIpcClient;
+
 use crate::{app::App, desktop_file::{DesktopFile, DesktopFiles}};
 
 mod app;
@@ -13,6 +15,17 @@ fn main() {
     let mut chosen: Option<DesktopFile> = None;
 
     ratatui::run(|terminal| chosen = App::new(items).run(terminal).unwrap());
+    
+    if let Some(item) = chosen {
+        let ipc_client = SwayIpcClient::new().unwrap();
+        let command_string: String = item.execution_command.split_whitespace().filter(|item| !item.starts_with('%')).enumerate().map(|(index, item)| {
+            if index > 0 {
+                " ".to_string() + item
+            } else {
+                item.to_string()
+            }
+        }).collect();
 
-    println!("selected: {:?}", chosen);
+        ipc_client.run_command(&("exec ".to_string() + &command_string)).unwrap();
+    }
 }

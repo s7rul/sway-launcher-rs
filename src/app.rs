@@ -8,7 +8,7 @@ use ratatui::{
     widgets::Block,
 };
 
-use crate::{desktop_file::DesktopFile, fuzzy_search_list::FuzzySearchList, input_box::InputBox};
+use crate::{fuzzy_search_list::FuzzySearchList, input_box::InputBox};
 
 pub struct App<T> {
     should_exit: bool,
@@ -17,7 +17,7 @@ pub struct App<T> {
     selected_item: Option<T>,
 }
 
-impl <T: Clone> App<T> {
+impl<T: Clone> App<T> {
     pub fn new(items: Vec<(String, T)>) -> Self {
         Self {
             should_exit: false,

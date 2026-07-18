@@ -10,7 +10,7 @@ struct ItemHolder<T> {
     rank: Option<i64>,
 }
 
-impl <T> Ord for ItemHolder<T> {
+impl<T> Ord for ItemHolder<T> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match self.rank.cmp(&other.rank) {
             std::cmp::Ordering::Less => std::cmp::Ordering::Less,
@@ -28,19 +28,19 @@ impl <T> Ord for ItemHolder<T> {
     }
 }
 
-impl <T> PartialOrd for ItemHolder<T> {
+impl<T> PartialOrd for ItemHolder<T> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl <T> PartialEq for ItemHolder<T> {
+impl<T> PartialEq for ItemHolder<T> {
     fn eq(&self, other: &Self) -> bool {
         self.rank == other.rank && self.name.len() == other.name.len()
     }
 }
 
-impl <T> Eq for ItemHolder<T> {}
+impl<T> Eq for ItemHolder<T> {}
 
 pub struct FuzzySearchList<T> {
     items: Vec<ItemHolder<T>>,
@@ -49,7 +49,7 @@ pub struct FuzzySearchList<T> {
     number_of_items_shown: usize,
 }
 
-impl <T: Clone> FuzzySearchList<T> {
+impl<T: Clone> FuzzySearchList<T> {
     pub fn new(items: Vec<(String, T)>) -> Self {
         Self {
             items: items
@@ -101,7 +101,7 @@ impl <T: Clone> FuzzySearchList<T> {
     }
 }
 
-impl <T> Widget for &mut FuzzySearchList<T> {
+impl<T> Widget for &mut FuzzySearchList<T> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,

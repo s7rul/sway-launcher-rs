@@ -1,5 +1,6 @@
 use std::{fs, path::PathBuf};
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct DesktopFile {
     pub name: String,
@@ -117,6 +118,7 @@ impl DesktopFiles {
         Self::find(dirs)
     }
 
+    #[allow(unused)]
     pub fn get_all_names<'a>(&'a self) -> Vec<&'a str> {
         self.desktop_files
             .iter()
@@ -124,6 +126,7 @@ impl DesktopFiles {
             .collect()
     }
 
+    #[allow(unused)]
     pub fn reset_iterator(&mut self) {
         self.iterator_index = 0;
     }

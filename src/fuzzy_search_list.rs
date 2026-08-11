@@ -1,4 +1,9 @@
-use ratatui::{text::Line, widgets::Widget};
+use ratatui::{
+    layout::Rect,
+    style::{Style, Stylize},
+    text::{Line, Span},
+    widgets::Widget,
+};
 use skim::{
     CaseMatching,
     fuzzy_matcher::{FuzzyMatcher, arinae::ArinaeMatcher},
@@ -7,6 +12,7 @@ use skim::{
 struct ItemHolder<T> {
     name: String,
     item: T,
+    match_indecies: Vec<usize>,
     rank: Option<i64>,
 }
 
@@ -57,6 +63,7 @@ impl<T: Clone> FuzzySearchList<T> {
                 .map(|item| ItemHolder {
                     name: item.0.to_owned(),
                     item: item.1.clone(),
+                    match_indecies: vec![],
                     rank: Some(0),
                 })
                 .collect(),
@@ -71,7 +78,16 @@ impl<T: Clone> FuzzySearchList<T> {
         let mut items_not_none_count = 0;
 
         for item in &mut self.items {
-            item.rank = self.matcher.fuzzy_match(&item.name, key);
+            match self.matcher.fuzzy_indices(&item.name, key) {
+                Some((rank, indecies)) => {
+                    item.rank = Some(rank);
+                    item.match_indecies = indecies;
+                }
+                None => {
+                    item.rank = None;
+                    item.match_indecies = vec![];
+                }
+            }
 
             if item.rank.is_some() {
                 items_not_none_count += 1;
@@ -119,20 +135,27 @@ impl<T> Widget for &mut FuzzySearchList<T> {
             .filter(|item| item.rank.is_some())
             .enumerate()
         {
-            let mut spans = vec![];
-            if i == self.select_index {
-                spans.push(" > ".into());
+            let y = area.y + (area.height - i as u16) - 1;
+            let selected = i == self.select_index;
+            let style = if selected {
+                Style::default()
+                    .bg(ratatui::style::Color::DarkGray)
             } else {
-                spans.push("   ".into());
+                Style::default()
+            };
+
+            if selected {
+                buf.set_style(Rect::new(area.x, y, area.width, 1), style);
             }
+
+            for index in &item.match_indecies {
+                buf.set_style(Rect::new(area.x + *index as u16 + 3, y, 1, 1), Style::default().blue())
+            }
+
+            let mut spans = vec![if selected { " > ".into() } else { "   ".into() }];
             spans.push(item.name.as_str().into());
-            let line = Line::from(spans);
-            buf.set_line(
-                area.x,
-                area.y + (area.height - i as u16) - 1,
-                &line,
-                area.width,
-            );
+            let line = Line::from(spans).style(style);
+            buf.set_line(area.x, y, &line, area.width);
         }
     }
 }

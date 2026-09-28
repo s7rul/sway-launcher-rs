@@ -138,8 +138,7 @@ impl<T> Widget for &mut FuzzySearchList<T> {
             let y = area.y + (area.height - i as u16) - 1;
             let selected = i == self.select_index;
             let style = if selected {
-                Style::default()
-                    .bg(ratatui::style::Color::DarkGray)
+                Style::default().bg(ratatui::style::Color::DarkGray)
             } else {
                 Style::default()
             };
@@ -149,7 +148,10 @@ impl<T> Widget for &mut FuzzySearchList<T> {
             }
 
             for index in &item.match_indecies {
-                buf.set_style(Rect::new(area.x + *index as u16 + 3, y, 1, 1), Style::default().blue())
+                buf.set_style(
+                    Rect::new(area.x + *index as u16 + 3, y, 1, 1),
+                    Style::default().blue(),
+                )
             }
 
             let mut spans = vec![if selected { " > ".into() } else { "   ".into() }];

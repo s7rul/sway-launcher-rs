@@ -2,13 +2,13 @@ use std::io::Result;
 
 use crossterm::event::{self, KeyCode};
 use ratatui::{
-    DefaultTerminal, Frame,
+    Frame,
     layout::{Constraint, Layout, Position},
     text::Line,
     widgets::Block,
 };
 
-use crate::{fuzzy_search_list::FuzzySearchList, input_box::InputBox};
+use crate::{TuiTerminal, fuzzy_search_list::FuzzySearchList, input_box::InputBox};
 
 pub struct App<T> {
     should_exit: bool,
@@ -71,7 +71,7 @@ impl<T: Clone> App<T> {
         ));
     }
 
-    pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<Option<T>> {
+    pub fn run(mut self, terminal: &mut TuiTerminal) -> Result<Option<T>> {
         while !self.should_exit {
             terminal.draw(|frame| self.render(frame))?;
             self.handle_event()?;
